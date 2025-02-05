@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Resume</title>
   <style>
     body {
@@ -14,22 +15,24 @@
       margin: 0 auto;
       background: #fff;
       padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
     }
-    /* Header container styles for title and download button alignment */
     .header-container {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
       margin-bottom: 20px;
     }
     .header-container h1 {
+      font-size: 24px;
       margin: 0;
-      font-size: 28px;
     }
     .download-button {
-      padding: 8px 16px;
-      font-size: 16px;
+      padding: 10px 16px;
+      font-size: 14px;
       text-decoration: none;
       color: #fff;
       background-color: #28a745;
@@ -43,6 +46,8 @@
       text-align: center;
     }
     canvas {
+      max-width: 100%;
+      height: auto;
       border: 1px solid #ccc;
       margin-bottom: 10px;
     }
@@ -52,8 +57,8 @@
     }
     .controls button {
       padding: 8px 16px;
-      margin: 0 10px;
-      font-size: 16px;
+      margin: 0 5px;
+      font-size: 14px;
       cursor: pointer;
       border: none;
       border-radius: 4px;
@@ -68,14 +73,13 @@
       cursor: not-allowed;
     }
     .page-info {
-      font-size: 16px;
+      font-size: 14px;
       vertical-align: middle;
     }
   </style>
 </head>
 <body>
   <div class="viewer-container">
-    <!-- Header with title and download button aligned horizontally -->
     <div class="header-container">
       <h1>My Resume</h1>
       <a class="download-button" href="./Resume-iOS-Developer-Hein Khant Zaw.pdf" download="Resume-iOS-Developer-Hein Khant Zaw.pdf">
@@ -93,13 +97,9 @@
     </div>
   </div>
 
-  <!-- Include PDF.js from a CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
-    // Set the workerSrc property
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-    // Path to your resume PDF file
     const url = './Resume-iOS-Developer-Hein Khant Zaw.pdf';
 
     let pdfDoc = null,
@@ -114,25 +114,19 @@
     const prevButton = document.getElementById('prev-page');
     const nextButton = document.getElementById('next-page');
 
-    // Function to update the state of navigation buttons
     const updateButtons = () => {
       prevButton.disabled = pageNum <= 1;
       nextButton.disabled = pageNum >= pdfDoc.numPages;
     };
 
-    // Render the page
     const renderPage = num => {
       pageIsRendering = true;
       pdfDoc.getPage(num).then(page => {
         const viewport = page.getViewport({ scale });
-        canvas.height = viewport.height;
         canvas.width = viewport.width;
+        canvas.height = viewport.height;
 
-        const renderCtx = {
-          canvasContext: ctx,
-          viewport: viewport
-        };
-
+        const renderCtx = { canvasContext: ctx, viewport: viewport };
         page.render(renderCtx).promise.then(() => {
           pageIsRendering = false;
           updateButtons();
@@ -142,12 +136,10 @@
           }
         });
 
-        // Update page number display
         document.getElementById('page-num').textContent = num;
       });
     };
 
-    // Queue render of the page if another is in progress
     const queueRenderPage = num => {
       if (pageIsRendering) {
         pageNumIsPending = num;
@@ -156,39 +148,33 @@
       }
     };
 
-    // Show Previous Page
     const showPrevPage = () => {
-      if (pageNum <= 1) {
-        return;
+      if (pageNum > 1) {
+        pageNum--;
+        queueRenderPage(pageNum);
       }
-      pageNum--;
-      queueRenderPage(pageNum);
     };
 
-    // Show Next Page
     const showNextPage = () => {
-      if (pageNum >= pdfDoc.numPages) {
-        return;
+      if (pageNum < pdfDoc.numPages) {
+        pageNum++;
+        queueRenderPage(pageNum);
       }
-      pageNum++;
-      queueRenderPage(pageNum);
     };
 
-    // Load the PDF document
     pdfjsLib.getDocument(url).promise.then(pdfDoc_ => {
       pdfDoc = pdfDoc_;
       document.getElementById('page-count').textContent = pdfDoc.numPages;
       renderPage(pageNum);
     }).catch(err => {
-      const div = document.createElement('div');
-      div.style.color = 'red';
-      div.style.marginTop = '20px';
-      div.appendChild(document.createTextNode(`Error: ${err.message}`));
-      document.body.insertBefore(div, document.querySelector('#pdf-container'));
+      const errorDiv = document.createElement('div');
+      errorDiv.style.color = 'red';
+      errorDiv.style.marginTop = '20px';
+      errorDiv.textContent = `Error: ${err.message}`;
+      document.querySelector('.viewer-container').appendChild(errorDiv);
       document.querySelector('.controls').style.display = 'none';
     });
 
-    // Attach event listeners to buttons
     prevButton.addEventListener('click', showPrevPage);
     nextButton.addEventListener('click', showNextPage);
   </script>
